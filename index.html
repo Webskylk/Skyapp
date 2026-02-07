@@ -7,48 +7,34 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
         :root { --primary: #2563eb; --sidebar-bg: #1e293b; }
-        
         .sidebar-bg { background-color: var(--sidebar-bg); color: #cbd5e1; }
         .sidebar-mobile { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
         .sidebar-open { transform: translateX(0); }
         .active-link { background-color: var(--primary); color: white; border-left: 4px solid #fff; }
-        
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         .float-btn { position: fixed; bottom: 25px; right: 25px; width: 55px; height: 55px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 40; border: none; }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden bg-gray-100 text-gray-800">
 
     <div id="auth-screen" class="fixed inset-0 bg-gray-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm border border-gray-200 fade-in">
+        <div class="bg-white p-8 rounded-2xl shadow-xl text-center w-full max-w-sm border border-gray-200">
             <div class="w-16 h-16 rounded-xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6 shadow-lg bg-blue-600 dynamic-logo">S</div>
             <h1 class="text-2xl font-bold text-gray-900 mb-2 dynamic-app-name">Sky Circle</h1>
-            <p class="text-gray-500 mb-8 dynamic-tagline text-sm">Invoicing Platform</p>
-            
+            <p class="text-gray-500 mb-8 dynamic-tagline text-sm">Professional Invoicing</p>
             <div class="space-y-3">
-                <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 px-6 py-3 rounded-xl shadow-sm active:bg-gray-100 transition duration-200">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
-                    <span class="font-bold text-gray-700 text-sm">Sign in with Google</span>
-                </button>
-                
-                <button onclick="loginGuest()" class="w-full flex items-center justify-center gap-3 bg-gray-100 border border-transparent px-6 py-3 rounded-xl shadow-sm active:bg-gray-200 transition duration-200">
-                    <i class="fa-solid fa-user-secret text-gray-600"></i>
-                    <span class="font-bold text-gray-700 text-sm">Continue as Guest</span>
-                </button>
+                <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 px-6 py-3 rounded-xl shadow-sm active:bg-gray-100"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"><span class="font-bold text-gray-700 text-sm">Google Login</span></button>
+                <button onclick="loginGuest()" class="w-full flex items-center justify-center gap-3 bg-gray-100 px-6 py-3 rounded-xl shadow-sm active:bg-gray-200"><i class="fa-solid fa-user-secret"></i><span class="font-bold text-gray-700 text-sm">Guest Mode</span></button>
             </div>
-            
-            <p id="loading-txt" class="mt-6 text-sm hidden flex justify-center items-center gap-2 text-gray-500"><span class="loader"></span> Connecting...</p>
+            <p id="loading-txt" class="mt-6 text-sm hidden"><span class="loader inline-block"></span> Loading...</p>
         </div>
     </div>
 
@@ -56,78 +42,81 @@
         <header class="md:hidden absolute top-0 left-0 right-0 h-16 bg-white border-b flex justify-between items-center px-4 z-30 shadow-sm">
             <button onclick="toggleSidebar()" class="text-gray-600 text-xl p-2"><i class="fa-solid fa-bars"></i></button>
             <span class="font-bold text-lg dynamic-app-name text-blue-900">Sky Circle</span>
-            <div class="flex gap-3">
-                <button onclick="nav('editor')" class="text-gray-500"><i class="fa-solid fa-gear"></i></button>
-                <button onclick="logout()" class="text-red-500"><i class="fa-solid fa-right-from-bracket"></i></button>
-            </div>
+            <button onclick="logout()" class="text-red-500"><i class="fa-solid fa-power-off"></i></button>
         </header>
 
-        <aside id="sidebar" class="sidebar-bg sidebar-mobile fixed inset-y-0 left-0 w-64 z-40 md:relative md:translate-x-0 shadow-2xl md:shadow-none flex flex-col h-full">
+        <aside id="sidebar" class="sidebar-bg sidebar-mobile fixed inset-y-0 left-0 w-64 z-40 md:relative md:translate-x-0 shadow-2xl flex flex-col h-full">
             <div class="p-6 flex justify-between items-center border-b border-gray-700/50 h-16 md:h-auto">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded flex items-center justify-center text-white font-bold bg-blue-600 dynamic-logo">S</div>
-                    <span class="font-bold text-lg tracking-wide text-white dynamic-app-name">Sky Circle</span>
-                </div>
+                <span class="font-bold text-lg text-white dynamic-app-name">Sky Circle</span>
                 <button onclick="toggleSidebar()" class="md:hidden text-gray-400"><i class="fa-solid fa-times"></i></button>
             </div>
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <button onclick="nav('dashboard');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg active-link" id="nav-dashboard"><i class="fa-solid fa-chart-pie w-5"></i> <span class="lbl-dash">Dashboard</span></button>
-                <button onclick="nav('create');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg" id="nav-create"><i class="fa-solid fa-plus-circle w-5"></i> <span class="lbl-newinv">New Invoice</span></button>
-                <button onclick="nav('invoices');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg" id="nav-invoices"><i class="fa-solid fa-file-lines w-5"></i> <span class="lbl-allinv">History</span></button>
-                <button onclick="nav('customers');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg" id="nav-customers"><i class="fa-solid fa-users w-5"></i> <span class="lbl-cust">Customers</span></button>
-                <div class="pt-4 pb-2 px-4 text-xs font-bold uppercase tracking-wider opacity-50">Admin</div>
-                <button onclick="nav('editor');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-yellow-400 bg-white/5" id="nav-editor"><i class="fa-solid fa-wand-magic-sparkles w-5"></i> Site Editor</button>
+                <button onclick="nav('dashboard');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg active-link" id="nav-dashboard"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</button>
+                <button onclick="nav('create');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg" id="nav-create"><i class="fa-solid fa-plus-circle w-5"></i> New Invoice</button>
+                <button onclick="nav('invoices');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg" id="nav-invoices"><i class="fa-solid fa-history w-5"></i> History</button>
+                <button onclick="nav('editor');toggleSidebar()" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-lg text-yellow-400" id="nav-editor"><i class="fa-solid fa-gear w-5"></i> Site Editor</button>
             </nav>
-            <div class="p-4 border-t border-gray-700/50 bg-black/20">
-                <div class="flex items-center gap-3 mb-3">
-                    <img id="user-pic" class="w-8 h-8 rounded-full border border-gray-500 bg-gray-700">
-                    <div><p id="user-name" class="text-xs font-bold text-white truncate w-32">Guest</p><p id="trial-badge" class="text-[10px] text-green-400">Loading...</p></div>
-                </div>
-                <button onclick="logout()" class="text-xs text-red-400 hover:text-red-300 w-full text-left p-1"><i class="fa-solid fa-power-off"></i> Sign Out</button>
+            <div class="p-4 border-t border-gray-700/50">
+                <p id="user-name" class="text-xs font-bold text-white truncate">User</p>
+                <button onclick="logout()" class="text-xs text-red-400 mt-1">Sign Out</button>
             </div>
         </aside>
         <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
 
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-gray-100 pt-16 md:pt-0">
             <div class="flex-1 overflow-y-auto p-4 md:p-8" id="main-container">
-                <div id="view-dashboard" class="space-y-6 max-w-7xl mx-auto fade-in">
-                    <div class="flex justify-between items-center"><h2 class="text-xl font-bold text-gray-800 lbl-dash">Dashboard</h2><span class="text-xs bg-white px-2 py-1 rounded border text-gray-500" id="dash-date"></span></div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-500"><p class="text-xs font-bold uppercase text-gray-500">Total Sales</p><h3 class="text-2xl font-bold mt-1 text-gray-800">LKR <span id="dash-total">0.00</span></h3></div>
-                        <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-green-500"><p class="text-xs font-bold uppercase text-gray-500">Invoices</p><h3 class="text-2xl font-bold mt-1 text-gray-800" id="dash-count">0</h3></div>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200"><h3 class="font-bold text-gray-800 mb-4 text-sm"><i class="fa-solid fa-building"></i> Business Profile</h3><div class="grid grid-cols-1 gap-3"><input id="biz-name" placeholder="Business Name" class="border p-2 rounded text-sm bg-gray-50"><input id="biz-phone" placeholder="Phone" class="border p-2 rounded text-sm bg-gray-50"><textarea id="biz-addr" placeholder="Address" class="border p-2 rounded text-sm bg-gray-50" rows="2"></textarea></div><button onclick="saveBiz()" class="mt-3 w-full bg-gray-900 text-white py-2 rounded text-sm font-bold">Save Profile</button></div>
-                </div>
-                <div id="view-create" class="hidden max-w-5xl mx-auto pb-24 fade-in">
-                    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                        <div class="p-5 md:p-8">
-                            <div class="flex flex-col gap-4 mb-6 border-b pb-4">
-                                <div><h1 class="text-2xl font-bold text-gray-800 lbl-newinv">New Invoice</h1></div>
-                                <div class="flex justify-between items-center"><div class="flex items-center gap-2"><span class="text-sm font-bold text-gray-500">#</span><input id="inv-no" class="border-b font-mono font-bold w-20 text-right outline-none" placeholder="001"></div><input type="date" id="inv-date" class="border rounded p-1 text-xs text-gray-600"></div>
-                            </div>
-                            <div class="space-y-4 mb-6">
-                                <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1 lbl-bill">Bill To</label><input id="cust-name" placeholder="Client Name" class="w-full border p-2 rounded-lg text-sm font-bold mb-2"><textarea id="cust-addr" placeholder="Contact Info" class="w-full border p-2 rounded-lg text-sm" rows="2"></textarea></div>
-                                <div class="bg-gray-50 p-4 rounded-xl border"><div class="flex justify-between items-center mb-2"><label class="text-xs font-bold text-gray-600">Details</label><button onclick="addField()" class="text-xs bg-white border px-2 py-1 rounded shadow-sm">+ Add</button></div><div id="dynamic-fields" class="space-y-2"></div></div>
-                            </div>
-                            <div class="overflow-x-auto mb-4"><table class="w-full min-w-[300px]"><thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase"><tr><th class="p-2 text-left lbl-desc">Item</th><th class="p-2 text-right w-16">Qty</th><th class="p-2 text-right w-20">Rate</th><th class="p-2 text-right w-20">Tot</th><th class="w-8"></th></tr></thead><tbody id="item-list" class="divide-y"></tbody></table></div>
-                            <button onclick="addItem()" class="text-sm font-bold text-blue-600 mb-4">+ Add Item</button>
-                            <div class="border-t pt-4 text-right"><p class="text-gray-500 text-xs">Total</p><h2 class="text-3xl font-bold text-gray-800">LKR <span id="display-total">0.00</span></h2></div>
-                        </div>
-                        <div class="bg-gray-50 p-4 flex flex-col gap-3 border-t">
-                            <div class="grid grid-cols-2 gap-2"><button onclick="shareVia('whatsapp')" class="bg-green-100 text-green-700 py-2 rounded text-xs font-bold"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button><button onclick="shareVia('email')" class="bg-blue-100 text-blue-700 py-2 rounded text-xs font-bold"><i class="fa-regular fa-envelope"></i> Email</button></div>
-                            <button onclick="saveInvoice('final')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-lg flex justify-center items-center gap-2"><i class="fa-solid fa-download"></i> Save & Download PDF</button>
-                        </div>
+                <div id="view-dashboard" class="space-y-6 max-w-7xl mx-auto">
+                    <h2 class="text-xl font-bold">Dashboard</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-blue-600"><p class="text-xs font-bold text-gray-400 uppercase">Sales</p><h3 class="text-2xl font-bold" id="dash-total">0.00</h3></div>
+                        <div class="bg-white p-5 rounded-xl shadow-sm border-t-4 border-green-500"><p class="text-xs font-bold text-gray-400 uppercase">Count</p><h3 class="text-2xl font-bold" id="dash-count">0</h3></div>
                     </div>
                 </div>
-                <div id="view-invoices" class="hidden space-y-4 max-w-6xl mx-auto fade-in"><h2 class="text-xl font-bold text-gray-800 lbl-allinv">History</h2><div class="bg-white rounded-xl shadow border overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs border-b"><tr><th class="p-3">Date</th><th class="p-3">#</th><th class="p-3">Client</th><th class="p-3 text-right">Total</th></tr></thead><tbody id="invoice-history-body" class="divide-y"></tbody></table></div></div></div>
-                <div id="view-customers" class="hidden space-y-4 max-w-4xl mx-auto fade-in"><h2 class="text-xl font-bold text-gray-800 lbl-cust">Clients</h2><div class="bg-white rounded-xl shadow border overflow-hidden"><ul id="customer-list-ul" class="divide-y"></ul></div></div>
-                <div id="view-editor" class="hidden max-w-4xl mx-auto pb-20 fade-in"><div class="bg-white rounded-xl shadow-xl border overflow-hidden"><div class="p-4 bg-gray-900 text-white flex justify-between items-center"><h2 class="text-lg font-bold">Site Editor</h2><button onclick="saveSiteConfig()" class="bg-green-600 px-3 py-1 rounded text-sm font-bold">Save</button></div><div class="p-5 space-y-5"><div><label class="text-xs font-bold text-gray-500">App Name</label><input id="conf-app-name" class="w-full border p-2 rounded mt-1"></div><div><label class="text-xs font-bold text-gray-500">Theme Color</label><div class="flex gap-3 mt-2"><button onclick="setTheme('#2563eb','#1e293b')" class="w-8 h-8 rounded-full bg-blue-600 border-2 border-white shadow"></button><button onclick="setTheme('#dc2626','#0f172a')" class="w-8 h-8 rounded-full bg-red-600 border-2 border-white shadow"></button><button onclick="setTheme('#16a34a','#064e3b')" class="w-8 h-8 rounded-full bg-green-600 border-2 border-white shadow"></button><button onclick="setTheme('#000000','#000000')" class="w-8 h-8 rounded-full bg-black border-2 border-white shadow"></button></div><input type="hidden" id="conf-primary"><input type="hidden" id="conf-sidebar"></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-bold text-gray-500">Inv Title</label><input id="conf-lbl-inv-title" class="w-full border p-2 rounded mt-1"></div><div><label class="text-xs font-bold text-gray-500">Bill To</label><input id="conf-lbl-bill" class="w-full border p-2 rounded mt-1"></div></div></div></div></div>
+
+                <div id="view-create" class="hidden max-w-4xl mx-auto pb-24">
+                    <div class="bg-white rounded-xl shadow-lg p-6 border">
+                        <div class="flex justify-between items-start mb-6 border-b pb-4">
+                            <h1 class="text-2xl font-bold text-gray-800">New Invoice</h1>
+                            <div class="text-right">
+                                <input id="inv-no" class="border-b font-bold w-16 text-right outline-none" placeholder="001">
+                                <p class="text-[10px] text-gray-400 mt-1">Invoice No</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 mb-6">
+                            <input id="cust-name" placeholder="Client Name" class="w-full border p-3 rounded-lg font-bold">
+                            <textarea id="cust-addr" placeholder="Client Contact / Email" class="w-full border p-3 rounded-lg text-sm" rows="2"></textarea>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-dashed">
+                                <div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-gray-500">Extra Details</span><button onclick="addField()" class="text-xs bg-blue-600 text-white px-2 py-1 rounded">+ Add</button></div>
+                                <div id="dynamic-fields" class="space-y-2"></div>
+                            </div>
+                        </div>
+
+                        <table class="w-full mb-4 text-sm">
+                            <thead class="bg-gray-100"><tr><th class="p-2 text-left">Item</th><th class="p-2 text-right">Rate</th><th class="w-8"></th></tr></thead>
+                            <tbody id="item-list"></tbody>
+                        </table>
+                        <button onclick="addItem()" class="text-sm font-bold text-blue-600 mb-6">+ Add Item</button>
+
+                        <div class="text-right border-t pt-4">
+                            <p class="text-gray-500 text-xs">Grand Total</p>
+                            <h2 class="text-3xl font-bold text-blue-600">LKR <span id="display-total">0.00</span></h2>
+                        </div>
+
+                        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="shareVia('email')" class="bg-gray-800 text-white py-3 rounded-lg font-bold flex justify-center items-center gap-2"><i class="fa-solid fa-envelope"></i> Send Email Draft</button>
+                            <button onclick="saveInvoice()" class="bg-blue-600 text-white py-3 rounded-lg font-bold flex justify-center items-center gap-2 shadow-lg active:scale-95 transition"><i class="fa-solid fa-download"></i> Save & Download PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-invoices" class="hidden"><h2 class="font-bold mb-4">Invoice History</h2><div id="history-list" class="space-y-2"></div></div>
+
+                <div id="view-editor" class="hidden"><div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold mb-4">Settings</h2><input id="biz-name" placeholder="My Business Name" class="w-full border p-2 mb-2 rounded"><input id="biz-phone" placeholder="My Phone" class="w-full border p-2 mb-2 rounded"><textarea id="biz-addr" placeholder="My Address" class="w-full border p-2 rounded"></textarea><button onclick="saveBiz()" class="w-full bg-blue-600 text-white p-3 rounded mt-4 font-bold">Save Settings</button></div></div>
             </div>
             <button onclick="nav('create')" class="float-btn"><i class="fa-solid fa-plus"></i></button>
         </main>
     </div>
-
-    <div id="lock-overlay" class="hidden fixed inset-0 bg-gray-900 z-[60] flex flex-col items-center justify-center text-white text-center p-6 backdrop-blur-sm"><div class="bg-gray-800 p-6 rounded-2xl w-full max-w-sm"><i class="fa-solid fa-lock text-4xl text-red-500 mb-4"></i><h2 class="text-2xl font-bold">Expired</h2><div id="ext-offer" class="hidden mt-4"><button onclick="claimExtension()" class="w-full bg-green-600 py-2 rounded font-bold">Extend Now</button></div><p id="final-msg" class="hidden text-red-400 mt-4">Contact Admin</p></div></div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -144,73 +133,28 @@
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth(), db = firebase.firestore();
-        let currentUser=null, siteConfig={appName:"Sky Circle",tagline:"Invoicing",primary:"#2563eb",sidebar:"#1e293b",labels:{dash:"Dashboard",newinv:"New Invoice",allinv:"History",cust:"Customers",invTitle:"INVOICE",bill:"Bill To"}}, bizData={};
-
-        // --- UI TOGGLES ---
-        function toggleSidebar() { const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'); if(sb.classList.contains('sidebar-open')){sb.classList.remove('sidebar-open');ov.classList.add('hidden');}else{sb.classList.add('sidebar-open');ov.classList.remove('hidden');} }
+        let currentUser=null, bizData={};
 
         // --- AUTH ---
-        function loginWithGoogle(){document.getElementById('loading-txt').classList.remove('hidden');auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>{alert(e.message);document.getElementById('loading-txt').classList.add('hidden');});}
-        
-        // GUEST LOGIN FUNCTION
-        function loginGuest(){document.getElementById('loading-txt').classList.remove('hidden');auth.signInAnonymously().catch(e=>{alert(e.message);document.getElementById('loading-txt').classList.add('hidden');});}
-
+        function loginGuest(){ document.getElementById('loading-txt').classList.remove('hidden'); auth.signInAnonymously(); }
+        function loginWithGoogle(){ document.getElementById('loading-txt').classList.remove('hidden'); auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         auth.onAuthStateChanged(async u=>{
             if(u){
                 currentUser=u; document.getElementById('auth-screen').classList.add('hidden'); document.getElementById('app-ui').classList.remove('hidden');
-                // Check if anonymous
-                if(u.isAnonymous){
-                    document.getElementById('user-name').innerText = "Guest User";
-                    document.getElementById('user-pic').src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"; // Guest Icon
-                } else {
-                    document.getElementById('user-name').innerText=u.displayName; document.getElementById('user-pic').src=u.photoURL;
-                }
-                document.getElementById('dash-date').innerText = new Date().toLocaleDateString();
-                await checkTrial(u); await loadConfig(); await loadBiz(); loadDash();
-                document.getElementById('inv-date').valueAsDate=new Date(); if(document.getElementById('item-list').children.length===0)addItem();
-            }else{document.getElementById('auth-screen').classList.remove('hidden');document.getElementById('app-ui').classList.add('hidden');}
+                document.getElementById('user-name').innerText=u.isAnonymous?"Guest User":u.displayName;
+                await loadBiz(); loadDash();
+            } else { document.getElementById('auth-screen').classList.remove('hidden'); document.getElementById('app-ui').classList.add('hidden'); }
         });
-        function logout(){auth.signOut();location.reload();}
+        function logout(){ auth.signOut(); location.reload(); }
 
-        // --- LOGIC ---
-        async function checkTrial(u){const r=db.collection('users').doc(u.uid),d=await r.get();if(!d.exists){const e=new Date();e.setDate(e.getDate()+30);await r.set({email:u.email||'guest',expiry:e,extLevel:0});updateBadge(30);}else{const dd=d.data(),days=Math.ceil((dd.expiry.toDate()-new Date())/864e5);if(days<=0)lock(dd.extLevel);else updateBadge(days);}}
-        function updateBadge(d){document.getElementById('trial-badge').innerText=`${d} Days Left`;}
-        function lock(l){document.getElementById('lock-overlay').classList.remove('hidden');if(l<2){document.getElementById('ext-offer').classList.remove('hidden');document.getElementById('ext-offer').querySelector('button').onclick=async()=>{const e=new Date();e.setDate(e.getDate()+(l==0?2:3));await db.collection('users').doc(currentUser.uid).update({expiry:e,extLevel:l+1});location.reload();}}else document.getElementById('final-msg').classList.remove('hidden');}
-        
-        async function loadConfig(){try{const d=await db.collection('settings').doc('global').get();if(d.exists)siteConfig={...siteConfig,...d.data()};applyConfig();}catch(e){}}
-        function applyConfig(){document.documentElement.style.setProperty('--primary',siteConfig.primary);document.documentElement.style.setProperty('--sidebar-bg',siteConfig.sidebar);document.querySelectorAll('.dynamic-app-name').forEach(e=>e.innerText=siteConfig.appName);const l=siteConfig.labels;setText('.lbl-dash',l.dash);setText('.lbl-newinv',l.newinv);setText('.lbl-allinv',l.allinv);setText('.lbl-cust',l.cust);setText('.lbl-inv-title',l.invTitle);setText('.lbl-bill',l.bill);}
-        function setText(s,v){document.querySelectorAll(s).forEach(e=>e.innerText=v);}
-        function setTheme(p,s){document.getElementById('conf-primary').value=p;document.getElementById('conf-sidebar').value=s;document.documentElement.style.setProperty('--primary',p);document.documentElement.style.setProperty('--sidebar-bg',s);}
-        async function saveSiteConfig(){const cfg={appName:document.getElementById('conf-app-name').value||siteConfig.appName,primary:document.getElementById('conf-primary').value||siteConfig.primary,sidebar:document.getElementById('conf-sidebar').value||siteConfig.sidebar,labels:{dash:siteConfig.labels.dash,newinv:siteConfig.labels.newinv,allinv:siteConfig.labels.allinv,cust:siteConfig.labels.cust,invTitle:document.getElementById('conf-lbl-inv-title').value,bill:document.getElementById('conf-lbl-bill').value}};await db.collection('settings').doc('global').set(cfg);siteConfig={...siteConfig,...cfg};alert("Saved!");applyConfig();}
-        
-        function nav(id){['dashboard','create','invoices','customers','editor'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden'));document.getElementById('view-'+id).classList.remove('hidden');if(id==='editor'){document.getElementById('conf-app-name').value=siteConfig.appName;document.getElementById('conf-lbl-inv-title').value=siteConfig.labels.invTitle;document.getElementById('conf-lbl-bill').value=siteConfig.labels.bill;}if(id==='invoices')loadInv();if(id==='customers')loadCust();if(id==='dashboard')loadDash();}
-        
-        function addField(l='',v=''){const d=document.createElement('div');d.className="flex gap-2 mb-2";d.innerHTML=`<input class="border p-1 rounded text-xs w-1/3 cf-label" placeholder="Label" value="${l}"><input class="border p-1 rounded text-sm w-2/3 cf-val" placeholder="Value" value="${v}"><button onclick="this.parentElement.remove()" class="text-red-400 font-bold px-2">x</button>`;document.getElementById('dynamic-fields').appendChild(d);}
-        function addItem(d='',q=1,r=0){const tr=document.createElement('tr');tr.className="border-b";tr.innerHTML=`<td class="p-2"><input class="w-full bg-transparent outline-none it-desc p-1 text-sm" placeholder="Item" value="${d}"></td><td class="p-2"><input type="number" class="w-full text-right bg-transparent outline-none it-qty p-1 text-sm" value="${q}" oninput="calc()"></td><td class="p-2"><input type="number" class="w-full text-right bg-transparent outline-none it-rate p-1 text-sm" value="${r}" oninput="calc()"></td><td class="p-2 text-right font-bold it-tot p-1 text-sm">0.00</td><td class="p-2 text-center"><button onclick="this.closest('tr').remove();calc()" class="text-red-400 font-bold">x</button></td>`;document.getElementById('item-list').appendChild(tr);calc();}
-        function calc(){let t=0;document.querySelectorAll('#item-list tr').forEach(r=>{const tot=r.querySelector('.it-qty').value*r.querySelector('.it-rate').value;r.querySelector('.it-tot').innerText=tot.toFixed(2);t+=tot;});document.getElementById('display-total').innerText=t.toLocaleString(undefined,{minimumFractionDigits:2});}
-        
-        async function saveBiz(){const d={name:document.getElementById('biz-name').value,phone:document.getElementById('biz-phone').value,addr:document.getElementById('biz-addr').value};await db.collection('users').doc(currentUser.uid).update({biz:d});bizData=d;alert("Profile Saved!");}
-        async function loadBiz(){const d=await db.collection('users').doc(currentUser.uid).get();if(d.data().biz){bizData=d.data().biz;document.getElementById('biz-name').value=bizData.name||'';document.getElementById('biz-phone').value=bizData.phone||'';document.getElementById('biz-addr').value=bizData.addr||'';}}
-        
-        async function saveInvoice(t){
-            const c=document.getElementById('cust-name').value; if(!c)return alert("Client Name Required!");
-            const d={uid:currentUser.uid,no:document.getElementById('inv-no').value,date:document.getElementById('inv-date').value,custName:c,custAddr:document.getElementById('cust-addr').value,fields:[],items:[],total:document.getElementById('display-total').innerText,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
-            document.querySelectorAll('#dynamic-fields div').forEach(e=>d.fields.push({l:e.querySelector('.cf-label').value,v:e.querySelector('.cf-val').value}));
-            document.querySelectorAll('#item-list tr').forEach(r=>d.items.push({desc:r.querySelector('.it-desc').value,qty:r.querySelector('.it-qty').value,rate:r.querySelector('.it-rate').value,total:r.querySelector('.it-tot').innerText}));
-            await db.collection('invoices').add(d); alert("Invoice Saved!"); generatePDF(d);
-        }
-        
-        function shareVia(m){const n=document.getElementById('cust-name').value||'Client',t=document.getElementById('display-total').innerText,msg=`Hi ${n}, Invoice Total: LKR ${t}. Thank you!`;if(m==='whatsapp')window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');if(m==='email')window.open(`mailto:?subject=Invoice&body=${encodeURIComponent(msg)}`);}
-        
-        function generatePDF(d){
-            const el=document.createElement('div');el.className="p-8 bg-white text-gray-800 font-sans text-sm";
-            el.innerHTML=`<div class="flex justify-between mb-6"><div><h1 class="text-2xl font-bold">${bizData.name||'Company'}</h1><p class="text-gray-500">${bizData.addr||''}</p><p>${bizData.phone||''}</p></div><div class="text-right"><h2 class="text-3xl font-bold text-gray-200">${siteConfig.labels.invTitle}</h2><p>#${d.no}</p><p>${d.date}</p></div></div><hr class="mb-6"><div class="flex justify-between mb-6"><div><p class="text-xs font-bold text-gray-400 uppercase">${siteConfig.labels.bill}</p><h3 class="font-bold text-lg">${d.custName}</h3><p>${d.custAddr}</p></div><div class="text-right">${d.fields.map(f=>`<p><span class="font-bold">${f.l}:</span> ${f.v}</p>`).join('')}</div></div><table class="w-full mb-6"><thead class="bg-gray-50 text-xs font-bold uppercase"><tr><th class="p-2 text-left">Item</th><th class="p-2 text-right">Qty</th><th class="p-2 text-right">Rate</th><th class="p-2 text-right">Total</th></tr></thead><tbody>${d.items.map(i=>`<tr><td class="p-2 border-b">${i.desc}</td><td class="p-2 text-right border-b">${i.qty}</td><td class="p-2 text-right border-b">${i.rate}</td><td class="p-2 text-right border-b font-bold">${i.total}</td></tr>`).join('')}</tbody></table><div class="text-right"><p class="text-gray-500 text-xs">Total</p><h2 class="text-2xl font-bold">LKR ${d.total}</h2></div><div class="mt-8 pt-4 border-t text-center text-xs text-gray-400"><p>Thank you!</p></div>`;
-            html2pdf().set({margin:0.4,filename:`Inv-${d.no}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{unit:'in',format:'a4'}}).from(el).save();
-        }
+        // --- UI ---
+        function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('sidebar-open'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); }
+        function nav(id){ ['dashboard','create','invoices','editor'].forEach(v=>document.getElementById('view-'+v).classList.add('hidden')); document.getElementById('view-'+id).classList.remove('hidden'); if(id==='invoices')loadHistory(); }
 
-        async function loadDash(){const s=await db.collection('invoices').where('uid','==',currentUser.uid).get();let t=0;s.forEach(d=>t+=parseFloat(d.data().total.replace(/,/g,''))||0);document.getElementById('dash-total').innerText=t.toLocaleString(undefined,{minimumFractionDigits:2});document.getElementById('dash-count').innerText=s.size;}
-        async function loadInv(){const b=document.getElementById('invoice-history-body');b.innerHTML='';const s=await db.collection('invoices').where('uid','==',currentUser.uid).orderBy('createdAt','desc').limit(20).get();s.forEach(d=>{const i=d.data();b.innerHTML+=`<tr><td class="p-3">${i.date}</td><td class="p-3 font-bold text-blue-600">#${i.no}</td><td class="p-3">${i.custName}</td><td class="p-3 text-right font-bold">${i.total}</td></tr>`;});}
-        async function loadCust(){const u=document.getElementById('customer-list-ul');u.innerHTML='';const s=await db.collection('invoices').where('uid','==',currentUser.uid).get();const c=new Set();s.forEach(d=>c.add(d.data().custName));c.forEach(n=>{if(n)u.innerHTML+=`<li class="p-4 border-b font-bold">${n}</li>`;});}
-    </script>
-</body>
-</html>
+        // --- CORE ---
+        function addItem(){
+            const tr=document.createElement('tr'); tr.innerHTML=`<td class="p-2"><input class="w-full bg-transparent it-desc" placeholder="Service"></td><td class="p-2"><input type="number" class="w-full text-right bg-transparent it-rate" value="0" oninput="calc()"></td><td class="p-2 text-red-500 font-bold" onclick="this.closest('tr').remove();calc()">x</td>`;
+            document.getElementById('item-list').appendChild(tr);
+        }
+        function addField(){
+            const d=document.createElement('div'); d.className="flex
