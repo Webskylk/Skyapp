@@ -1,18 +1,137 @@
-# Sky Circle Pro (Zoho API Edition) - Setup Guide
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title class="client-app-name">Sky Circle Pro Invoicing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        :root { --accent: #2563eb; }
+        .white-label-footer { border-top: 2px dashed #e2e8f0; padding-top: 20px; margin-top: 40px; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
 
-## 1. Concept
-Backend එක ලෙස Zoho Invoice/Books පාවිච්චි කරන අතර, Frontend එක (UI) ලෙස අපේ Custom HTML/Tailwind සයිට් එක පාවිච්චි වේ.
+    <aside class="w-64 bg-slate-900 text-slate-400 p-6 flex flex-col gap-4 shadow-2xl">
+        <div class="mb-10 flex items-center gap-3">
+            <div id="client-logo" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black">SC</div>
+            <h1 class="text-white font-black text-lg tracking-tighter client-app-name">Sky Circle</h1>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <button onclick="nav('create')" class="w-full text-left p-3 rounded-xl bg-blue-600 text-white font-bold text-xs uppercase tracking-widest"><i class="fa-solid fa-plus-circle mr-2"></i> New Bill</button>
+            <button onclick="nav('recurring')" class="w-full text-left p-3 rounded-xl hover:bg-slate-800 font-bold text-xs uppercase tracking-widest"><i class="fa-solid fa-repeat mr-2"></i> Recurring</button>
+            <button onclick="nav('products')" class="w-full text-left p-3 rounded-xl hover:bg-slate-800 font-bold text-xs uppercase tracking-widest"><i class="fa-solid fa-box mr-2"></i> Products</button>
+        </nav>
+        <div class="pt-4 border-t border-slate-800">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Connected to Zoho</p>
+        </div>
+    </aside>
 
-## 2. Zoho Setup
-1. [Zoho API Console](https://api-console.zoho.com/) එකට ගොස් 'Server-based Application' එකක් සාදන්න.
-2. **Redirect URI** ලෙස ඔයාගේ Netlify URL එක ලබා දෙන්න.
-3. Client ID සහ Client Secret ලබාගෙන සුරක්ෂිතව තබාගන්න.
+    <main class="flex-1 overflow-y-auto p-10 bg-slate-50">
+        <div id="view-create" class="max-w-5xl mx-auto space-y-10">
+            <div class="flex justify-between items-end">
+                <h2 class="text-4xl font-black text-slate-900 tracking-tighter">New Invoice</h2>
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Invoice Number</p>
+                    <input type="text" id="inv-no" class="bg-transparent border-b-2 border-slate-200 font-black text-2xl outline-none text-right focus:border-blue-600" value="INV-001">
+                </div>
+            </div>
 
-## 3. White-labeling Logic
-- සියලුම PDF templates අපේ Frontend එකේ සකස් වේ.
-- Zoho branding ඉවත් කර 'Sky Circle' branding ඇතුළත් කරනු ලැබේ.
-- Custom fields (Passport, Ticket No) අපේ UI එක හරහා Zoho custom fields වලට Map කරනු ලැබේ.
+            <div class="bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-slate-50">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Customer Name</label>
+                        <select id="zoho-customers" class="w-full bg-slate-50 p-4 rounded-2xl font-bold outline-none border-none focus:ring-4 focus:ring-blue-100">
+                            <option>Loading Customers...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Billing Currency</label>
+                        <select id="currency" onchange="updateCurrency()" class="w-full bg-slate-50 p-4 rounded-2xl font-bold outline-none border-none">
+                            <option value="LKR">LKR (Sri Lankan Rupee)</option>
+                            <option value="USD">USD (US Dollar)</option>
+                            <option value="GBP">GBP (British Pound)</option>
+                        </select>
+                    </div>
+                </div>
 
-## 4. Stability Features
-- Token Refresh Mechanism: ලොගින් එක හැමවෙලේම පවත්වා ගැනීමට.
-- Error Logging: API එකේ ගැටලුවක් වුවහොත් වහාම හඳුනා ගැනීමට.
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                    <input type="text" id="custom-field-1" class="bg-slate-50 p-4 rounded-2xl font-bold text-sm outline-none" placeholder="Passport Number">
+                    <input type="text" id="custom-field-2" class="bg-slate-50 p-4 rounded-2xl font-bold text-sm outline-none" placeholder="Ticket / Domain No">
+                </div>
+
+                <table class="w-full mb-6">
+                    <thead class="bg-slate-50 text-[10px] font-black text-slate-400 uppercase">
+                        <tr><th class="p-4 text-left">Description</th><th class="p-4 text-center">Qty</th><th class="p-4 text-right">Rate</th><th class="p-4 text-right">Total</th></tr>
+                    </thead>
+                    <tbody id="line-items" class="divide-y divide-slate-100"></tbody>
+                </table>
+                <button onclick="addLine()" class="text-blue-600 font-bold text-xs uppercase tracking-widest">+ Add Line Item</button>
+
+                <div class="white-label-footer">
+                    <div class="flex justify-between items-end">
+                        <div class="w-1/2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Invoice Footer Note</label>
+                            <textarea id="footer-note" class="w-full bg-slate-50 p-4 rounded-2xl text-xs outline-none" rows="2" placeholder="Custom message for the customer..."></textarea>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Grand Total</p>
+                            <h2 class="text-5xl font-black text-slate-900 mt-2"><span id="symbol">Rs.</span> <span id="total">0.00</span></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 p-8 rounded-[2rem] flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest"><i class="fa-solid fa-shield-halved mr-2"></i> White-label Mode Active</p>
+                <div class="flex gap-4">
+                    <button onclick="previewInvoice()" class="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-xs uppercase hover:bg-slate-100 transition">Live Preview</button>
+                    <button onclick="syncAndDownload()" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase shadow-xl shadow-blue-900/20 hover:bg-blue-500 transition">Generate & Sync Zoho</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // CLIENT CONFIGURATION (WHITE-LABEL)
+        const CLIENT_CONFIG = {
+            appName: "Sky Circle Pro",
+            footerText: "Thank you for your business. For any inquiries, contact 0757219219.",
+            logoColor: "#2563eb"
+        };
+
+        // ZOHO KEYS (FETCHED FROM YOUR BACKEND)
+        let zohoAuthToken = "YOUR_ACCESS_TOKEN";
+
+        function nav(v) { /* Navigation Logic */ }
+
+        function addLine() {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="p-4"><input class="w-full bg-transparent font-bold text-sm outline-none" placeholder="Product Name"></td><td class="p-4 text-center"><input type="number" value="1" class="w-16 text-center bg-slate-50 rounded-lg p-1 outline-none"></td><td class="p-4 text-right"><input type="number" value="0" class="w-24 text-right bg-slate-50 rounded-lg p-1 outline-none"></td><td class="p-4 text-right font-black text-sm">0.00</td>`;
+            document.getElementById('line-items').appendChild(tr);
+        }
+
+        function previewInvoice() {
+            // This opens the white-label preview we discussed
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <body style="font-family:sans-serif; padding:50px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:50px;">
+                        <h1 style="color:${CLIENT_CONFIG.logoColor}">${CLIENT_CONFIG.appName}</h1>
+                        <div style="text-align:right"><h2>INVOICE</h2><p>Date: ${new Date().toLocaleDateString()}</p></div>
+                    </div>
+                    <div style="margin-top:100px; padding-top:20px; border-top:2px solid #eee;">
+                        <p style="font-size:12px; color:#666;">${CLIENT_CONFIG.footerText}</p>
+                    </div>
+                    <script>window.print();<\/script>
+                </body>
+                </html>
+            `);
+        }
+    </script>
+</body>
+</html>
