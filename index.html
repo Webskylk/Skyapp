@@ -11,7 +11,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         :root { --primary: #2563eb; --sidebar-bg: #0f172a; }
         
         .sidebar-bg { background-color: var(--sidebar-bg); color: #94a3b8; }
@@ -22,17 +22,16 @@
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .float-btn { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); z-index: 40; cursor: pointer; border: none; }
-        .float-btn:active { transform: scale(0.9); }
+        .float-btn { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); z-index: 40; cursor: pointer; }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden bg-gray-50 text-gray-900">
 
     <div id="auth-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6">
-        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl text-center w-full max-w-sm border border-slate-100 animate-fade-in">
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl text-center w-full max-w-sm border border-slate-100">
             <div class="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-4xl font-black mx-auto mb-6 shadow-xl bg-blue-600">S</div>
-            <h1 class="text-3xl font-black text-slate-900 mb-2 tracking-tight">Sky Circle</h1>
-            <p class="text-slate-500 mb-10 font-medium leading-tight">Secure Cloud-Base<br>Invoicing Platform</p>
+            <h1 class="text-3xl font-black text-slate-900 mb-2">Sky Circle</h1>
+            <p class="text-slate-500 mb-10 font-medium leading-tight text-sm">Secure Cloud-Base<br>Invoicing Platform</p>
             
             <div class="space-y-4">
                 <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-100 px-6 py-4 rounded-2xl shadow-sm active:bg-slate-50 transition-all font-bold text-slate-700">
@@ -40,11 +39,11 @@
                     Google Sign-in
                 </button>
                 <button onclick="loginGuest()" class="w-full flex items-center justify-center gap-3 bg-slate-100 px-6 py-4 rounded-2xl active:bg-slate-200 transition-all font-bold text-slate-600">
-                    <i class="fa-solid fa-user-shield"></i>
+                    <i class="fa-solid fa-bolt"></i>
                     Continue as Guest
                 </button>
             </div>
-            <p id="loading-txt" class="mt-8 text-sm hidden flex justify-center items-center gap-3 text-blue-600 font-bold"><span class="loader"></span> Syncing Cloud Data...</p>
+            <p id="loading-txt" class="mt-8 text-sm hidden flex justify-center items-center gap-3 text-blue-600 font-bold"><span class="loader"></span> Syncing Cloud...</p>
         </div>
     </div>
 
@@ -52,7 +51,8 @@
         <header class="md:hidden absolute top-0 left-0 right-0 h-16 bg-white border-b flex justify-between items-center px-6 z-30">
             <button onclick="toggleSidebar()" class="text-slate-600 text-2xl"><i class="fa-solid fa-bars-staggered"></i></button>
             <span class="font-black text-xl text-blue-700 tracking-tighter">SKY CIRCLE</span>
-            <div class="w-8"></div> </header>
+            <div class="w-8"></div>
+        </header>
 
         <aside id="sidebar" class="sidebar-bg sidebar-mobile fixed inset-y-0 left-0 w-72 z-40 md:relative md:translate-x-0 shadow-2xl flex flex-col h-full transition-all">
             <div class="p-8 flex justify-between items-center h-20 md:h-28">
@@ -60,31 +60,57 @@
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 text-2xl"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <nav class="flex-1 px-4 space-y-2 mt-4">
-                <button onclick="nav('dashboard');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl active-link transition-all" id="nav-dashboard"><i class="fa-solid fa-chart-line w-5"></i> Dashboard</button>
-                <button onclick="nav('create');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all" id="nav-create"><i class="fa-solid fa-file-invoice-dollar w-5"></i> New Invoice</button>
-                <button onclick="nav('invoices');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all" id="nav-invoices"><i class="fa-solid fa-history w-5"></i> History</button>
-                <button onclick="nav('editor');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all text-orange-400" id="nav-editor"><i class="fa-solid fa-gears w-5"></i> Settings</button>
+                <button onclick="nav('dashboard');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl active-link" id="nav-dashboard"><i class="fa-solid fa-chart-line w-5"></i> Dashboard</button>
+                <button onclick="nav('create');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl" id="nav-create"><i class="fa-solid fa-file-invoice-dollar w-5"></i> New Invoice</button>
+                <button onclick="nav('invoices');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl" id="nav-invoices"><i class="fa-solid fa-history w-5"></i> History</button>
+                <button onclick="nav('editor');toggleSidebar()" class="sidebar-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-orange-400" id="nav-editor"><i class="fa-solid fa-gears w-5"></i> Settings</button>
             </nav>
-            <div class="p-8 border-t border-slate-800 bg-black/10">
-                <div class="flex items-center gap-3 mb-4">
-                    <img id="user-pic" class="w-10 h-10 rounded-full border-2 border-slate-700 bg-slate-800 object-cover">
-                    <div class="overflow-hidden">
-                        <p id="user-name" class="text-sm font-bold text-white truncate w-32">User</p>
-                        <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Active Session</p>
-                    </div>
-                </div>
-                <button onclick="logout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition-colors flex items-center gap-2 w-full p-1"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+            <div class="p-8 border-t border-slate-800 bg-black/10 text-white">
+                <p id="user-name" class="text-sm font-bold truncate mb-2">Loading...</p>
+                <button onclick="logout()" class="text-xs font-bold text-red-400 hover:text-red-300 transition-colors flex items-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
             </div>
         </aside>
-        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/60 z-30 hidden md:hidden backdrop-blur-sm"></div>
+
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/60 z-30 hidden md:hidden"></div>
 
         <main class="flex-1 flex flex-col h-full overflow-hidden pt-16 md:pt-0">
             <div class="flex-1 overflow-y-auto p-6 md:p-12" id="main-container">
-                
-                <div id="view-dashboard" class="max-w-5xl mx-auto space-y-8 animate-fade-in">
-                    <div>
-                        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Overview</h1>
-                        <p class="text-slate-500 font-medium">Real-time cloud database metrics</p>
-                    </div>
+                <div id="view-dashboard" class="max-w-5xl mx-auto space-y-8">
+                    <h1 class="text-3xl font-black">Dashboard Overview</h1>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate
+                        <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm"><p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Revenue</p><h3 class="text-4xl font-black" id="dash-total">0.00</h3></div>
+                        <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm"><p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Invoices</p><h3 class="text-4xl font-black" id="dash-count">0</h3></div>
+                    </div>
+                </div>
+                <div id="view-create" class="hidden max-w-4xl mx-auto pb-24">
+                    <div class="bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12">
+                        <div class="flex flex-col md:flex-row justify-between border-b pb-8 mb-8 gap-4">
+                            <h1 class="text-4xl font-black">New Invoice</h1>
+                            <div class="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl">
+                                <span class="font-bold">#</span>
+                                <input id="inv-no" class="bg-transparent font-black text-xl w-20 outline-none text-blue-600" placeholder="001">
+                                <input type="date" id="inv-date" class="bg-transparent text-xs font-bold outline-none">
+                            </div>
+                        </div>
+                        <input id="cust-name" placeholder="Client Name" class="w-full border-2 p-4 rounded-2xl font-bold mb-4 outline-none focus:border-blue-500">
+                        <textarea id="cust-addr" placeholder="Client Address / Contact" class="w-full border-2 p-4 rounded-2xl text-sm mb-4 outline-none focus:border-blue-500" rows="2"></textarea>
+                        
+                        <div class="bg-slate-50 p-6 rounded-2xl mb-8">
+                            <button onclick="addField()" class="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-full mb-4">+ Add Info Field</button>
+                            <div id="dynamic-fields" class="space-y-2"></div>
+                        </div>
+
+                        <table class="w-full mb-6">
+                            <thead class="text-xs font-black text-slate-400 uppercase tracking-widest border-b"><th class="p-3 text-left">Description</th><th class="p-3 text-right">LKR</th><th class="w-10"></th></thead>
+                            <tbody id="item-list"></tbody>
+                        </table>
+                        <button onclick="addItem()" class="text-xs font-black text-blue-600 mb-8">+ ADD LINE</button>
+                        
+                        <div class="text-right border-t pt-6">
+                            <p class="text-xs text-slate-400 font-bold">GRAND TOTAL</p>
+                            <h2 class="text-4xl font-black">LKR <span id="display-total">0.00</span></h2>
+                        </div>
+                        <button onclick="saveInvoice()" class="w-full bg-blue-600 text-white p-5 rounded-2xl mt-8 font-black shadow-lg">SAVE & DOWNLOAD PDF</button>
+                    </div>
+                </div>
+                <div id="view-invoices" class="hidden max-w-4xl mx-auto"><h1 class="text-3xl font
