@@ -1,101 +1,621 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sky Circle Pro System</title>
-    <style>
-        /* General Styling */
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 0; }
-        .container { max-width: 900px; margin: 20px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .hidden { display: none; }
-        .btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .btn-primary { background: #0044cc; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-secondary { background: #6c757d; color: white; }
-        input, textarea, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        
-        /* Login Screen */
-        #login-screen { text-align: center; margin-top: 100px; max-width: 400px; margin-left: auto; margin-right: auto; }
-        
-        /* Dashboard */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
-        th { background: #f8f9fa; }
+    <title>Sky Circle Pro SaaS</title>
+    
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://unpkg.com/dexie/dist/dexie.js](https://unpkg.com/dexie/dist/dexie.js)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css)" />
 
-        /* Invoice Form & View */
-        .invoice-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; }
-        .brand-title { color: #0044cc; font-size: 24px; font-weight: bold; }
-        .invoice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .items-table th { background: #0044cc; color: white; }
-        .totals-section { width: 300px; margin-left: auto; margin-top: 20px; }
-        .total-row { display: flex; justify-content: space-between; padding: 5px 0; }
-        .grand-total { font-weight: bold; font-size: 1.2em; border-top: 2px solid #0044cc; padding-top: 10px; }
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
         
         /* Print Styles */
         @media print {
-            body { background: white; -webkit-print-color-adjust: exact; }
             .no-print { display: none !important; }
-            .container { box-shadow: none; margin: 0; padding: 0; }
-            input, textarea { border: none; background: transparent; resize: none; }
+            .print-only { display: block !important; }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            #main-content { margin: 0; padding: 0; }
         }
+        .print-only { display: none; }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans text-gray-800">
 
-    <div id="login-screen" class="container">
-        <h2 style="color: #0044cc;">SKY CIRCLE</h2>
-        <p>Pro Invoicing System</p>
-        <input type="text" id="username" placeholder="Username (admin)">
-        <input type="password" id="password" placeholder="Password (1234)">
-        <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="login()">Login</button>
-        <p id="login-error" style="color:red; display:none; font-size:12px;">Invalid Login!</p>
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-96">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold text-blue-600">SKY CIRCLE</h1>
+                <p class="text-sm text-gray-500">SaaS Invoicing Platform</p>
+            </div>
+            
+            <div id="trial-alert" class="hidden bg-yellow-100 text-yellow-800 p-3 rounded mb-4 text-sm">
+                Trial Expires in <span id="days-left"></span> days.
+            </div>
+
+            <div id="expired-alert" class="hidden bg-red-100 text-red-800 p-3 rounded mb-4 text-sm font-bold text-center">
+                TRIAL EXPIRED! <br> Please contact Admin.
+            </div>
+
+            <button onclick="handleGoogleLogin()" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded flex items-center justify-center gap-2 mb-3">
+                <i class="fab fa-google"></i> Sign in with Google
+            </button>
+            
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="flex-shrink mx-4 text-gray-400">Or</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+                    <input type="text" id="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="admin">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                    <input type="password" id="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" placeholder="****">
+                </div>
+                <div id="admin-unlock" class="hidden mb-4">
+                     <label class="block text-gray-700 text-sm font-bold mb-2">License Key (Admin Only)</label>
+                     <input type="text" id="license-key" class="border-red-500 border rounded w-full py-2 px-3" placeholder="Enter Key to Unlock">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Secure Login
+                </button>
+            </form>
+            <p class="mt-4 text-center text-xs text-gray-500">Protected by Sky Circle Security</p>
+        </div>
     </div>
 
-    <div id="dashboard-screen" class="container hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h3>Dashboard</h3>
-            <div>
-                <button class="btn btn-primary" onclick="showCreateInvoice()">+ New Invoice</button>
-                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+    <div id="app-container" class="hidden flex h-screen overflow-hidden">
+        
+        <aside class="w-64 bg-slate-800 text-white flex flex-col no-print">
+            <div class="p-6 text-center border-b border-slate-700">
+                <h2 id="company-name-display" class="text-2xl font-bold">My Business</h2>
+                <p class="text-xs text-slate-400 mt-1">Powered by Sky Circle</p>
             </div>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Invoice #</th>
-                    <th>Date</th>
-                    <th>Customer</th>
-                    <th>Total (LKR)</th>
-                    <th>Actions</th>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <button onclick="showSection('dashboard')" class="w-full flex items-center space-x-3 px-4 py-3 bg-slate-700 rounded hover:bg-slate-600 transition">
+                    <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                </button>
+                <button onclick="showSection('invoices')" class="w-full flex items-center space-x-3 px-4 py-3 rounded hover:bg-slate-700 transition">
+                    <i class="fas fa-file-invoice-dollar"></i> <span>Invoices</span>
+                </button>
+                <button onclick="showSection('create-invoice')" class="w-full flex items-center space-x-3 px-4 py-3 rounded hover:bg-slate-700 transition">
+                    <i class="fas fa-plus-circle"></i> <span>New Invoice</span>
+                </button>
+                <button onclick="showSection('expenses')" class="w-full flex items-center space-x-3 px-4 py-3 rounded hover:bg-slate-700 transition">
+                    <i class="fas fa-wallet"></i> <span>Expenses</span>
+                </button>
+                <button onclick="showSection('customers')" class="w-full flex items-center space-x-3 px-4 py-3 rounded hover:bg-slate-700 transition">
+                    <i class="fas fa-users"></i> <span>Customers</span>
+                </button>
+                <div class="border-t border-slate-700 my-2"></div>
+                <button onclick="showSection('settings')" class="w-full flex items-center space-x-3 px-4 py-3 rounded hover:bg-slate-700 transition text-yellow-400">
+                    <i class="fas fa-cogs"></i> <span>Admin Settings</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-700">
+                <button onclick="logout()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded text-sm">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-gray-50 relative" id="main-content">
+            
+            <header class="bg-white shadow p-4 flex justify-between items-center no-print">
+                <h2 id="page-title" class="text-xl font-semibold text-gray-800">Dashboard</h2>
+                <div class="flex items-center gap-4">
+                    <a href="[https://wa.me/94757219219](https://wa.me/94757219219)" target="_blank" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                        <i class="fab fa-whatsapp"></i> Support
+                    </a>
+                    <span id="user-display" class="text-sm font-bold text-blue-800 bg-blue-100 px-3 py-1 rounded">Admin</span>
+                </div>
+            </header>
+
+            <div class="p-6">
+                
+                <section id="dashboard" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded shadow border-l-4 border-blue-500">
+                            <h3 class="text-gray-500 text-sm">Total Revenue</h3>
+                            <p id="dash-revenue" class="text-2xl font-bold">LKR 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow border-l-4 border-red-500">
+                            <h3 class="text-gray-500 text-sm">Total Expenses</h3>
+                            <p id="dash-expenses" class="text-2xl font-bold">LKR 0.00</p>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow border-l-4 border-green-500">
+                            <h3 class="text-gray-500 text-sm">Net Profit</h3>
+                            <p id="dash-profit" class="text-2xl font-bold">LKR 0.00</p>
+                        </div>
+                         <div class="bg-white p-6 rounded shadow border-l-4 border-purple-500">
+                            <h3 class="text-gray-500 text-sm">Active Customers</h3>
+                            <p id="dash-customers" class="text-2xl font-bold">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-4 rounded shadow">
+                            <h4 class="font-bold mb-4">Financial Overview</h4>
+                            <canvas id="financeChart"></canvas>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow">
+                            <h4 class="font-bold mb-4">System Audit Log (Live)</h4>
+                            <div id="audit-log" class="h-64 overflow-y-auto text-sm text-gray-600 space-y-2 border p-2 bg-gray-50 rounded">
+                                </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="create-invoice" class="hidden max-w-4xl mx-auto bg-white p-8 rounded shadow-lg">
+                    <div class="flex justify-between items-start mb-8 border-b pb-4">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">INVOICE</h2>
+                            <div class="mt-2">
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Invoice #</label>
+                                <input type="text" id="inv-no" class="border p-1 rounded font-mono font-bold text-gray-700" value="INV-001">
+                            </div>
+                        </div>
+                        <div class="text-right">
+                             <img id="inv-logo-preview" src="" class="h-16 mb-2 hidden ml-auto">
+                             <h3 id="inv-company-name" class="font-bold text-xl">My Company</h3>
+                             <p id="inv-company-details" class="text-sm text-gray-500 whitespace-pre-line">Add address in settings</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-1">Bill To:</label>
+                            <input type="text" id="inv-customer" class="w-full border p-2 rounded mb-1" placeholder="Customer Name" list="customer-list">
+                            <datalist id="customer-list"></datalist> <textarea id="inv-address" class="w-full border p-2 rounded h-20 text-sm" placeholder="Billing Address"></textarea>
+                            
+                            <div id="custom-fields-container" class="mt-2 space-y-2"></div>
+                            <button onclick="addCustomField()" class="text-xs text-blue-600 hover:underline mt-1">+ Add Custom Field (Passport, Ticket No, etc)</button>
+                        </div>
+                        <div class="text-right space-y-2">
+                            <div>
+                                <label class="text-sm font-bold text-gray-600">Date:</label>
+                                <input type="date" id="inv-date" class="border p-1 rounded ml-2">
+                            </div>
+                            <div>
+                                <label class="text-sm font-bold text-gray-600">Due Date:</label>
+                                <input type="date" id="inv-due" class="border p-1 rounded ml-2">
+                            </div>
+                            <div>
+                                <label class="text-sm font-bold text-gray-600">Recurring?</label>
+                                <input type="checkbox" id="inv-recurring" class="ml-2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <table class="w-full mb-8">
+                        <thead>
+                            <tr class="bg-gray-800 text-white text-sm uppercase">
+                                <th class="p-3 text-left">Description</th>
+                                <th class="p-3 text-right w-24">Qty</th>
+                                <th class="p-3 text-right w-32">Rate</th>
+                                <th class="p-3 text-right w-32">Amount</th>
+                                <th class="p-3 w-10 no-print"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-items">
+                            </tbody>
+                    </table>
+
+                    <button onclick="addItemRow()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm font-bold no-print mb-4">
+                        + Add Item
+                    </button>
+
+                    <div class="flex justify-end">
+                        <div class="w-64 space-y-2">
+                            <div class="flex justify-between text-gray-600">
+                                <span>Sub Total</span>
+                                <span id="inv-subtotal">0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center text-gray-600">
+                                <span>Tax (%)</span>
+                                <input type="number" id="inv-tax-rate" value="0" class="border p-1 w-16 text-right" onchange="calcTotals()">
+                            </div>
+                            <div class="flex justify-between font-bold text-xl border-t pt-2">
+                                <span>Total (LKR)</span>
+                                <span id="inv-total">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 border-t pt-4">
+                        <label class="block text-sm font-bold text-gray-600">Notes / Payment Terms:</label>
+                        <textarea id="inv-notes" class="w-full border p-2 rounded h-20 text-sm mt-1"></textarea>
+                    </div>
+
+                    <div id="inv-footer" class="mt-8 text-center text-xs text-gray-400">
+                        </div>
+
+                    <div class="mt-8 flex gap-4 no-print border-t pt-6">
+                        <button onclick="saveInvoice()" class="flex-1 bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700">Save Invoice</button>
+                        <button onclick="printInvoice()" class="flex-1 bg-gray-700 text-white py-3 rounded font-bold hover:bg-gray-800">Print / Download PDF</button>
+                    </div>
+                </section>
+
+                <section id="invoices" class="hidden">
+                    <div class="bg-white rounded shadow overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-4 border-b">#</th>
+                                    <th class="p-4 border-b">Date</th>
+                                    <th class="p-4 border-b">Customer</th>
+                                    <th class="p-4 border-b text-right">Amount</th>
+                                    <th class="p-4 border-b">Status</th>
+                                    <th class="p-4 border-b text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoice-list-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="settings" class="hidden max-w-2xl mx-auto">
+                    <div class="bg-white p-6 rounded shadow space-y-6">
+                        <h3 class="text-xl font-bold border-b pb-2">System Settings (WordPress Mode)</h3>
+                        
+                        <div>
+                            <label class="block font-bold text-sm mb-1">Company Name</label>
+                            <input type="text" id="set-comp-name" class="w-full border p-2 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-sm mb-1">Company Details (Address/Phone)</label>
+                            <textarea id="set-comp-details" class="w-full border p-2 rounded h-24"></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-sm mb-1">Footer Text</label>
+                            <input type="text" id="set-footer" class="w-full border p-2 rounded" placeholder="Thank you for your business!">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-sm mb-1">Logo URL (or Base64)</label>
+                            <input type="text" id="set-logo" class="w-full border p-2 rounded" placeholder="Image URL">
+                        </div>
+                        
+                        <div class="bg-yellow-50 p-4 rounded border border-yellow-200">
+                            <h4 class="font-bold text-yellow-800 mb-2">License Management</h4>
+                            <p class="text-xs text-gray-600 mb-2">Current Status: <span id="license-status" class="font-bold">Active</span></p>
+                            <button onclick="extendTrial(3)" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm mr-2">+ Extend 3 Days</button>
+                            <button onclick="resetSystem()" class="bg-red-600 text-white px-3 py-1 rounded text-sm">Factory Reset</button>
+                        </div>
+
+                        <button onclick="saveSettings()" class="w-full bg-green-600 text-white py-2 rounded font-bold">Update System</button>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DATABASE SETUP (Dexie.js) ---
+        const db = new Dexie("SkyCircleDB");
+        db.version(1).stores({
+            settings: "key,value",
+            invoices: "++id,number,date,customer,total,status,isRecurring",
+            customers: "++id,name,phone,email",
+            audit: "++id,timestamp,action,user",
+            system: "key,value" // For installation date/trial logic
+        });
+
+        // --- STATE & CONFIG ---
+        let currentUser = null;
+        let systemSettings = { companyName: "Sky Circle", footer: "Generated by Sky Circle" };
+        const TRIAL_DAYS = 30;
+        const EXTENSION_DAYS = 2;
+        const FINAL_GRACE = 3;
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initSystem();
+            renderInvoiceForm(); // Prep the form
+        });
+
+        async function initSystem() {
+            // Check Install Date
+            let installDate = await db.system.get('installDate');
+            if (!installDate) {
+                installDate = { key: 'installDate', value: new Date().toISOString() };
+                await db.system.put(installDate);
+                logAction('System Installed');
+            }
+            
+            // Load Settings
+            const settingsData = await db.settings.toArray();
+            settingsData.forEach(s => systemSettings[s.key] = s.value);
+            applySettings();
+        }
+
+        // --- AUTH & LICENSE LOGIC ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const key = document.getElementById('license-key').value;
+
+            // Simple Local Auth (In real app, hash passwords)
+            if (user === 'admin' && pass === 'admin123') {
+                await checkLicense(key);
+            } else {
+                alert("Invalid Credentials! (Try admin/admin123)");
+            }
+        }
+
+        function handleGoogleLogin() {
+            // Simulator for Google Login (Cannot do real OAuth in file://)
+            const email = prompt("Simulating Google Login.\nEnter Gmail Address:");
+            if(email && email.includes('@gmail.com')) {
+                logAction(`User logged in via Google: ${email}`);
+                checkLicense();
+            } else {
+                alert("Login Failed");
+            }
+        }
+
+        async function checkLicense(overrideKey) {
+            const installRec = await db.system.get('installDate');
+            const installDate = new Date(installRec.value);
+            const now = new Date();
+            const diffTime = Math.abs(now - installDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            
+            const totalAllowed = TRIAL_DAYS + EXTENSION_DAYS + FINAL_GRACE;
+            const remaining = totalAllowed - diffDays;
+
+            const daysLeftSpan = document.getElementById('days-left');
+            const trialAlert = document.getElementById('trial-alert');
+            const expiredAlert = document.getElementById('expired-alert');
+            const adminUnlock = document.getElementById('admin-unlock');
+
+            if (remaining > 0) {
+                // Access Granted
+                currentUser = "Admin";
+                daysLeftSpan.innerText = remaining;
+                trialAlert.classList.remove('hidden');
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                loadDashboard();
+                logAction('User Logged In');
+            } else {
+                // Expired
+                if (overrideKey === 'SKY-MASTER-2026') { // Hardcoded Admin Key for emergency
+                    await db.system.put({ key: 'installDate', value: new Date().toISOString() }); // Reset Timer
+                    alert("System Reactivated by Key!");
+                    location.reload();
+                } else {
+                    expiredAlert.classList.remove('hidden');
+                    trialAlert.classList.add('hidden');
+                    adminUnlock.classList.remove('hidden');
+                    alert("Trial Expired! Please contact support.");
+                    // Log unauthorized attempt
+                    logAction('Unauthorized Login Attempt (Expired)');
+                }
+            }
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        // --- AUDIT LOG ---
+        async function logAction(action) {
+            const entry = {
+                timestamp: new Date().toLocaleString(),
+                action: action,
+                user: currentUser || 'System'
+            };
+            await db.audit.add(entry);
+        }
+
+        async function loadAuditLog() {
+            const logs = await db.audit.reverse().limit(20).toArray();
+            const container = document.getElementById('audit-log');
+            container.innerHTML = logs.map(l => 
+                `<div class="border-b pb-1 mb-1">
+                    <span class="text-xs text-gray-400">[${l.timestamp}]</span> 
+                    <span class="font-bold text-xs">${l.user}:</span> 
+                    ${l.action}
+                </div>`
+            ).join('');
+        }
+
+        // --- DASHBOARD & NAVIGATION ---
+        function showSection(id) {
+            document.querySelectorAll('main > div > section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            
+            if(id === 'dashboard') loadDashboard();
+            if(id === 'invoices') loadInvoicesList();
+            if(id === 'settings') loadSettingsForm();
+            
+            document.getElementById('page-title').innerText = id.charAt(0).toUpperCase() + id.slice(1).replace('-', ' ');
+        }
+
+        async function loadDashboard() {
+            loadAuditLog();
+            
+            // Calculate Stats
+            const invs = await db.invoices.toArray();
+            let revenue = 0;
+            invs.forEach(i => revenue += parseFloat(i.total.replace(/,/g,'')));
+            
+            document.getElementById('dash-revenue').innerText = 'LKR ' + revenue.toLocaleString();
+            document.getElementById('dash-customers').innerText = (await db.customers.count()).toString();
+
+            // Chart
+            const ctx = document.getElementById('financeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [12000, 19000, 3000, 5000, revenue],
+                        borderColor: 'rgb(59, 130, 246)',
+                        tension: 0.1
+                    }]
+                }
+            });
+        }
+
+        // --- INVOICE LOGIC ---
+        function addItemRow() {
+            const tbody = document.getElementById('inv-items');
+            const tr = document.createElement('tr');
+            tr.className = "border-b";
+            tr.innerHTML = `
+                <td class="p-2"><input type="text" class="w-full border rounded p-1" placeholder="Item Name"></td>
+                <td class="p-2"><input type="number" class="w-full border rounded p-1 text-right qty" value="1" oninput="calcTotals()"></td>
+                <td class="p-2"><input type="number" class="w-full border rounded p-1 text-right rate" value="0" oninput="calcTotals()"></td>
+                <td class="p-2 text-right amount">0.00</td>
+                <td class="p-2 no-print"><button onclick="this.closest('tr').remove(); calcTotals()" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function addCustomField() {
+            const container = document.getElementById('custom-fields-container');
+            const div = document.createElement('div');
+            div.className = "flex gap-2";
+            div.innerHTML = `
+                <input type="text" placeholder="Label (e.g. Passport No)" class="border p-1 rounded text-xs w-1/3 font-bold">
+                <input type="text" placeholder="Value" class="border p-1 rounded text-xs w-2/3">
+                <button onclick="this.parentElement.remove()" class="text-red-500 no-print">x</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function calcTotals() {
+            let sub = 0;
+            document.querySelectorAll('#inv-items tr').forEach(row => {
+                const qty = row.querySelector('.qty').value;
+                const rate = row.querySelector('.rate').value;
+                const amt = qty * rate;
+                row.querySelector('.amount').innerText = amt.toFixed(2);
+                sub += amt;
+            });
+            
+            const tax = document.getElementById('inv-tax-rate').value;
+            const total = sub + (sub * (tax/100));
+            
+            document.getElementById('inv-subtotal').innerText = sub.toFixed(2);
+            document.getElementById('inv-total').innerText = total.toLocaleString(undefined, {minimumFractionDigits: 2});
+        }
+
+        async function saveInvoice() {
+            const data = {
+                number: document.getElementById('inv-no').value,
+                customer: document.getElementById('inv-customer').value,
+                date: document.getElementById('inv-date').value,
+                total: document.getElementById('inv-total').innerText,
+                status: 'Unpaid',
+                isRecurring: document.getElementById('inv-recurring').checked
+            };
+            
+            await db.invoices.add(data);
+            
+            // Save customer if new
+            const existingCust = await db.customers.where('name').equals(data.customer).first();
+            if(!existingCust && data.customer) {
+                await db.customers.add({name: data.customer});
+            }
+
+            logAction(`Invoice created: ${data.number}`);
+            alert("Invoice Saved!");
+            showSection('invoices');
+        }
+
+        async function loadInvoicesList() {
+            const list = await db.invoices.reverse().toArray();
+            const tbody = document.getElementById('invoice-list-body');
+            tbody.innerHTML = list.map(inv => `
+                <tr class="hover:bg-gray-50 border-b">
+                    <td class="p-3 font-mono">${inv.number}</td>
+                    <td class="p-3">${inv.date}</td>
+                    <td class="p-3 font-bold">${inv.customer}</td>
+                    <td class="p-3 text-right">${inv.total}</td>
+                    <td class="p-3"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">${inv.status}</span></td>
+                    <td class="p-3 text-center">
+                        <button class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></button>
+                        <button class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody id="invoice-list-body">
-                </tbody>
-        </table>
-    </div>
+            `).join('');
+        }
 
-    <div id="invoice-screen" class="container hidden">
-        <div class="no-print" style="margin-bottom: 20px; text-align: right;">
-            <button class="btn btn-secondary" onclick="showDashboard()">Back to Dashboard</button>
-            <button class="btn btn-success" onclick="saveInvoice()">Save Invoice</button>
-            <button class="btn btn-primary" onclick="window.print()">Print / Download PDF</button>
-        </div>
+        function printInvoice() {
+            window.print(); // Using native print for speed
+        }
 
-        <div class="invoice-header">
-            <div>
-                <div class="brand-title">Sky Circle</div>
-                <div>Web Development Sri Lanka</div>
-                <div style="margin-top: 5px; font-size: 12px; color: #666;">Pro Invoicing System</div>
-            </div>
-            <div style="text-align: right;">
-                <h1 style="margin: 0; color: #333;">INVOICE</h1>
-                <input type="text" id="inv-number" placeholder="#" value="INV-0001" style="text-align: right; font-weight: bold;">
-            </div>
-        </div>
+        // --- SETTINGS (WORDPRESS VIEW) ---
+        function loadSettingsForm() {
+            document.getElementById('set-comp-name').value = systemSettings.companyName || '';
+            document.getElementById('set-footer').value = systemSettings.footer || '';
+            document.getElementById('set-logo').value = systemSettings.logo || '';
+            document.getElementById('set-comp-details').value = systemSettings.details || '';
+        }
 
-        <div class="invoice-grid">
-            <div>
-                <strong>Bill To:</strong>
-                <input type="text" id="cust-name" placeholder
+        async function saveSettings() {
+            const name = document.getElementById('set-comp-name').value;
+            const footer = document.getElementById('set-footer').value;
+            const logo = document.getElementById('set-logo').value;
+            const details = document.getElementById('set-comp-details').value;
+
+            await db.settings.put({key: 'companyName', value: name});
+            await db.settings.put({key: 'footer', value: footer});
+            await db.settings.put({key: 'logo', value: logo});
+            await db.settings.put({key: 'details', value: details});
+
+            systemSettings = { companyName: name, footer: footer, logo: logo, details: details };
+            applySettings();
+            logAction('System Settings Updated');
+            alert("Settings Updated!");
+        }
+
+        function applySettings() {
+            document.getElementById('company-name-display').innerText = systemSettings.companyName || 'My Business';
+            document.getElementById('inv-company-name').innerText = systemSettings.companyName || 'My Business';
+            document.getElementById('inv-footer').innerText = systemSettings.footer || '';
+            document.getElementById('inv-company-details').innerText = systemSettings.details || '';
+            
+            if(systemSettings.logo) {
+                const img = document.getElementById('inv-logo-preview');
+                img.src = systemSettings.logo;
+                img.classList.remove('hidden');
+            }
+        }
+        
+        async function extendTrial(days) {
+             // Logic to manipulate install date to fake an extension
+             const currentInstall = await db.system.get('installDate');
+             const newDate = new Date(new Date(currentInstall.value).getTime() + (days * 24 * 60 * 60 * 1000));
+             await db.system.put({ key: 'installDate', value: newDate.toISOString() });
+             alert(`Extended by ${days} days!`);
+             location.reload();
+        }
+
+        async function resetSystem() {
+            if(confirm("WARNING: This will delete ALL data. Continue?")) {
+                await Dexie.delete("SkyCircleDB");
+                location.reload();
+            }
+        }
+
+    </script>
+</body>
+</html>
