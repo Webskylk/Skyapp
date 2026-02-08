@@ -3,101 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SKY CIRCLE - Pro Invoicing</title>
+    <title>Sky Circle Pro System</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        h2 {
-            margin: 0;
-            color: #333;
-            font-weight: 700;
-        }
-        p {
-            color: #888;
-            margin-top: 5px;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box; /* Ensures padding doesn't widen the box */
-            font-size: 14px;
-            color: #333;
-        }
-        input:focus {
-            border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 5px rgba(0,123,255,0.2);
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .btn:hover {
-            background-color: #0056b3;
+        /* General Styling */
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 20px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .hidden { display: none; }
+        .btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .btn-primary { background: #0044cc; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        input, textarea, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Login Screen */
+        #login-screen { text-align: center; margin-top: 100px; max-width: 400px; margin-left: auto; margin-right: auto; }
+        
+        /* Dashboard */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
+        th { background: #f8f9fa; }
+
+        /* Invoice Form & View */
+        .invoice-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; }
+        .brand-title { color: #0044cc; font-size: 24px; font-weight: bold; }
+        .invoice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .items-table th { background: #0044cc; color: white; }
+        .totals-section { width: 300px; margin-left: auto; margin-top: 20px; }
+        .total-row { display: flex; justify-content: space-between; padding: 5px 0; }
+        .grand-total { font-weight: bold; font-size: 1.2em; border-top: 2px solid #0044cc; padding-top: 10px; }
+        
+        /* Print Styles */
+        @media print {
+            body { background: white; -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .container { box-shadow: none; margin: 0; padding: 0; }
+            input, textarea { border: none; background: transparent; resize: none; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>SKY CIRCLE</h2>
+    <div id="login-screen" class="container">
+        <h2 style="color: #0044cc;">SKY CIRCLE</h2>
         <p>Pro Invoicing System</p>
-
-        <div class="form-group">
-            <label>Customer Name</label>
-            <input type="text" placeholder="Enter customer name">
-        </div>
-
-        <div class="form-group">
-            <label>Service / Item</label>
-            <input type="text" placeholder="e.g. Consulting Fee">
-        </div>
-
-        <div class="form-group">
-            <label>Amount (LKR)</label>
-            <input type="number" placeholder="0.00">
-        </div>
-
-        <button class="btn" onclick="alert('System Ready: දැන් මෙය Zoho හෝ Excel සමග සම්බන්ධ කළ හැක.')">Create Invoice</button>
+        <input type="text" id="username" placeholder="Username (admin)">
+        <input type="password" id="password" placeholder="Password (1234)">
+        <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="login()">Login</button>
+        <p id="login-error" style="color:red; display:none; font-size:12px;">Invalid Login!</p>
     </div>
 
-</body>
-</html>
+    <div id="dashboard-screen" class="container hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>Dashboard</h3>
+            <div>
+                <button class="btn btn-primary" onclick="showCreateInvoice()">+ New Invoice</button>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Total (LKR)</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="invoice-list-body">
+                </tbody>
+        </table>
+    </div>
+
+    <div id="invoice-screen" class="container hidden">
+        <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+            <button class="btn btn-secondary" onclick="showDashboard()">Back to Dashboard</button>
+            <button class="btn btn-success" onclick="saveInvoice()">Save Invoice</button>
+            <button class="btn btn-primary" onclick="window.print()">Print / Download PDF</button>
+        </div>
+
+        <div class="invoice-header">
+            <div>
+                <div class="brand-title">Sky Circle</div>
+                <div>Web Development Sri Lanka</div>
+                <div style="margin-top: 5px; font-size: 12px; color: #666;">Pro Invoicing System</div>
+            </div>
+            <div style="text-align: right;">
+                <h1 style="margin: 0; color: #333;">INVOICE</h1>
+                <input type="text" id="inv-number" placeholder="#" value="INV-0001" style="text-align: right; font-weight: bold;">
+            </div>
+        </div>
+
+        <div class="invoice-grid">
+            <div>
+                <strong>Bill To:</strong>
+                <input type="text" id="cust-name" placeholder
